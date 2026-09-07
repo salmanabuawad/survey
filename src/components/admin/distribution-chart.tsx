@@ -11,9 +11,11 @@ import {
   YAxis,
 } from "recharts";
 
+import { BidiText } from "@/components/survey/bidi-text";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { QuestionDistribution } from "@/lib/analytics";
+import { isolateNumericBidi } from "@/lib/bidi";
 
 /**
  * Horizontal bars, because the option labels are long Arabic sentences and a
@@ -73,7 +75,7 @@ function CategoryTick({ x = 0, y = 0, payload, charsPerLine = 26 }: TickProps) {
     >
       {lines.map((line, index) => (
         <tspan key={line + index} x={x + 8} dy={index === 0 ? offset : LINE_HEIGHT}>
-          {line}
+          {isolateNumericBidi(line)}
         </tspan>
       ))}
     </text>
@@ -206,7 +208,9 @@ export function DistributionChart({
         <ul className="mt-4 space-y-1.5 border-t border-cream-200 pt-4 text-sm">
           {distribution.options.map((option) => (
             <li key={option.label} className="flex items-start justify-between gap-4">
-              <span className="wrap-anywhere flex-1 text-ink-600">{option.label}</span>
+              <span className="wrap-anywhere flex-1 text-ink-600">
+                <BidiText>{option.label}</BidiText>
+              </span>
               <span className="shrink-0 font-semibold tabular-nums text-ink-800">
                 {option.count} · {option.percent}%
               </span>

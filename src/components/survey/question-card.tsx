@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 
+import { BidiText } from "@/components/survey/bidi-text";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/field";
 import { MAX_OTHER_LENGTH, MAX_TEXT_LENGTH } from "@/lib/limits";
@@ -51,7 +52,7 @@ export function QuestionCard({
           {question.number}
         </span>
         <span className="wrap-anywhere flex-1 text-base font-semibold text-ink-800 sm:text-lg">
-          {question.text}
+          <BidiText>{question.text}</BidiText>
         </span>
       </legend>
 
@@ -109,7 +110,7 @@ export function QuestionCard({
                     )}
                   />
                   <span className="wrap-anywhere flex-1 text-base leading-relaxed text-ink-700">
-                    {option.label}
+                    <BidiText>{option.label}</BidiText>
                   </span>
                 </label>
 
