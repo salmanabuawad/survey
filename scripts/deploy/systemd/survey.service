@@ -1,0 +1,51 @@
+# Inas kindergarten-teachers survey — Next.js server behind nginx.
+#
+#   sudo cp scripts/deploy/systemd/survey.service /etc/systemd/system/survey.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now survey
+
+[Unit]
+Description=Kindergarten teachers survey (survey.kortexd.com)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/survey
+
+# DATABASE_URL, ADMIN_PASSWORD and SESSION_SECRET live here, root-owned 0640.
+EnvironmentFile=/opt/survey/.env
+Environment=NODE_ENV=production
+Environment=PORT=3020
+Environment=HOSTNAME=127.0.0.1
+
+ExecStart=/usr/bin/node /opt/survey/.next/standalone/server.js
+
+Restart=always
+RestartSec=5
+
+# --- hardening -------------------------------------------------------------
+# The app only ever reads its own build output and talks to Postgres on
+# localhost; it never writes to disk.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# Next writes nothing at runtime here, but it does want its cache directory to
+# exist and be writable; everything else under /opt stays read-only.
+ReadWritePaths=/opt/survey/.next/standalone/.next/cache
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=survey
+
+[Install]
+WantedBy=multi-user.target

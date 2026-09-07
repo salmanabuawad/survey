@@ -1,0 +1,137 @@
+// Survey persistence for the kindergarten-teachers questionnaire.
+//
+// The questionnaire is anonymous by design: there is no column here for a name,
+// phone number, email address, ID number, child name or IP address, and none is
+// collected upstream either.
+//
+// Questions are versioned. Editing a question never rewrites it — it archives
+// the current version, which keeps every answer already given to it, and forks
+// a new live version that starts empty. See `src/lib/questions.ts`.
+
+generator client {
+  provider = "prisma-client-js"
+  // "native" covers local development on Windows/macOS; the Debian target is
+  // what the Ubuntu 24.04 host actually loads.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Section {
+  id       String @id @default(uuid()) @db.Uuid
+  /// Order within the questionnaire, 1-based. Gaps are tolerated.
+  position Int
+  title    String
+
+  questions Question[]
+
+  @@index([position])
+  @@map("section")
+}
+
+model Question {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Stable across every version of the same question. Two rows sharing a
+  /// lineageId are the same question at different points in time.
+  lineageId String @map("lineage_id") @db.Uuid
+  /// 1 for the original, incremented on every edit.
+  version Int
+  /// Human-readable slug for the lineage ("q1"…"q27", then "q28"…). Survives
+  /// reordering, so it is an identifier and not a label.
+  lineageKey String @map("lineage_key")
+
+  sectionId String @map("section_id") @db.Uuid
+  /// Order within the section. The number shown to the respondent is derived
+  /// from section order + this, so it changes when questions are reordered.
+  position Int
+
+  /// single | multiple | text
+  type String
+  text String
+  hint String?
+  /// [{ label: string, other?: boolean }] — verbatim answer labels.
+  options Json
+
+  /// live | archived | deleted
+  ///   live     — shown to respondents, exactly one per lineage
+  ///   archived — superseded by a newer version; keeps its answers
+  ///   deleted  — removed by an admin; keeps its answers, never shown again
+  status String @default("live")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  archivedAt DateTime? @map("archived_at")
+
+  section Section        @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  answers SurveyAnswer[]
+
+  @@unique([lineageId, version])
+  @@index([status])
+  @@index([lineageId])
+  @@index([sectionId, position])
+  @@map("question")
+}
+
+model SurveyResponse {
+  /// UUID handed out by the server, never derived from anything about the respondent.
+  id            String   @id @default(uuid()) @db.Uuid
+  /// Which edition of the questionnaire this answers.
+  surveyVersion String   @map("survey_version")
+  submittedAt   DateTime @default(now()) @map("submitted_at")
+  /// Wall-clock seconds from opening the first question to submitting, as
+  /// reported by the client. Null when the value was missing or implausible.
+  completionSeconds Int? @map("completion_seconds")
+
+  // Copied out of the answer rows so the dashboard can filter and group without
+  // joining every answer. Sourced from the q1-q4 lineages; left null if an
+  // admin has since deleted those questions.
+  frameworkType String? @map("framework_type")
+  ageGroup      String? @map("age_group")
+  groupSize     String? @map("group_size")
+  experience    String?
+
+  answers SurveyAnswer[]
+
+  @@index([submittedAt])
+  @@index([surveyVersion])
+  @@index([frameworkType])
+  @@index([ageGroup])
+  @@index([groupSize])
+  @@index([experience])
+  @@map("survey_response")
+}
+
+model SurveyAnswer {
+  id         String @id @default(uuid()) @db.Uuid
+  responseId String @map("response_id") @db.Uuid
+
+  /// The exact question *version* this answers. An edit forks a new version, so
+  /// this never silently starts pointing at different wording.
+  questionId String @map("question_id") @db.Uuid
+
+  /// Snapshots taken at submission time. Redundant against the question row on
+  /// purpose: they survive even if that row is later hard-deleted, and they are
+  /// what the CSV export reads.
+  questionKey    String @map("question_key")
+  questionNumber Int    @map("question_number")
+  questionText   String @map("question_text")
+  questionType   String @map("question_type")
+
+  /// Chosen option labels, verbatim. Empty for free-text questions.
+  selectedOptions String[] @map("selected_options")
+  /// Free-text body.
+  textValue String? @map("text_value")
+  /// What was typed after picking an "أخرى: __________" option.
+  otherText String? @map("other_text")
+
+  response SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question Question       @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([responseId, questionId])
+  @@index([questionId])
+  @@index([questionKey])
+  @@map("survey_answer")
+}

@@ -1,0 +1,38 @@
+{
+  "name": "kidsphere-inas-survey",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Arabic-first RTL survey for kindergarten teachers — inas-kindergarten-teachers-ar-v1",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "verify:content": "tsx scripts/verify-content.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx scripts/seed-questions.ts",
+    "db:diff-live": "tsx scripts/diff-live.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "prisma": "^6.3.1",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

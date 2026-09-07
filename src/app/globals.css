@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Palette — warm teal, soft violet, peach. Cream ground rather than white, so
+   long stretches of Arabic text stay comfortable on a phone in daylight.
+   Every foreground/background pair below clears WCAG AA at its intended size.
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: var(--font-plex-arabic), "Noto Sans Arabic", ui-sans-serif,
+    system-ui, sans-serif;
+
+  --color-cream-50: #fdfaf6;
+  --color-cream-100: #f8f1e8;
+  --color-cream-200: #efe3d5;
+
+  --color-teal-50: #eefaf8;
+  --color-teal-100: #d2f2ed;
+  --color-teal-200: #a8e5dd;
+  --color-teal-300: #6fd2c7;
+  --color-teal-400: #38b5a8;
+  --color-teal-500: #1d9689;
+  --color-teal-600: #14786f;
+  --color-teal-700: #135f59;
+  --color-teal-800: #134b47;
+  --color-teal-900: #0f3b38;
+
+  --color-violet-50: #f4f1fd;
+  --color-violet-100: #e9e3fb;
+  --color-violet-200: #d6ccf7;
+  --color-violet-300: #b8a6ef;
+  --color-violet-400: #957ce3;
+  --color-violet-500: #7857d4;
+  --color-violet-600: #6341ba;
+  --color-violet-700: #523597;
+  --color-violet-800: #442e7a;
+
+  --color-coral-50: #fff3ef;
+  --color-coral-100: #ffe2d8;
+  --color-coral-200: #ffc6b2;
+  --color-coral-300: #ffa183;
+  --color-coral-400: #fa7a55;
+  --color-coral-500: #e85d36;
+  --color-coral-600: #c94724;
+  --color-coral-700: #a4381c;
+
+  --color-ink-400: #7c7266;
+  --color-ink-500: #5f574d;
+  --color-ink-600: #453f38;
+  --color-ink-700: #332e29;
+  --color-ink-800: #241f1b;
+
+  --radius-xl2: 1.25rem;
+  --radius-xl3: 1.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--color-cream-200);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-cream-50);
+    color: var(--color-ink-700);
+    /* Two very soft washes; they read as light, not as a gradient banner. */
+    background-image:
+      radial-gradient(
+        60rem 40rem at 100% -10%,
+        color-mix(in oklab, var(--color-teal-100) 70%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 36rem at -10% 8%,
+        color-mix(in oklab, var(--color-violet-100) 65%, transparent),
+        transparent 60%
+      );
+    background-attachment: fixed;
+    font-feature-settings: "kern" 1;
+    /* Arabic diacritics and descenders need the extra leading. */
+    line-height: 1.85;
+  }
+
+  /* Arabic numerals stay Western per the source questionnaire (15–20, 5 دقائق). */
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.6;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-violet-500);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  /* Respect the reduced-motion preference rather than animating regardless. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Cards sit on cream; the shadow is warm rather than neutral grey. */
+  .shadow-warm {
+    box-shadow:
+      0 1px 2px rgba(69, 63, 56, 0.04),
+      0 8px 24px -12px rgba(69, 63, 56, 0.14);
+  }
+
+  .shadow-warm-lg {
+    box-shadow:
+      0 2px 4px rgba(69, 63, 56, 0.05),
+      0 20px 44px -20px rgba(69, 63, 56, 0.22);
+  }
+
+  /* Long Arabic option labels must never force the page sideways at 360px. */
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .animate-rise {
+    animation: rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Recharts draws an SVG; inside it, RTL inheritance would mirror the numbers. */
+.recharts-wrapper text {
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
