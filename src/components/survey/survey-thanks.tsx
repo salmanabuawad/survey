@@ -1,7 +1,18 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { SURVEY_THANKS } from "@/lib/survey-content";
+import type { Locale } from "@/lib/i18n/config";
+import { getMessages } from "@/lib/i18n/messages";
+import type { SurveyCopy } from "@/lib/i18n/survey-copy";
 
-export function SurveyThanks() {
+export function SurveyThanks({
+  locale,
+  copy,
+}: {
+  locale: Locale;
+  copy: SurveyCopy;
+}) {
+  const messages = getMessages(locale);
+  const thanks = copy.thanks;
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl items-center px-4 py-12 sm:px-6">
       <Card className="animate-rise w-full overflow-hidden">
@@ -27,21 +38,19 @@ export function SurveyThanks() {
 
         <CardContent className="space-y-5 pt-7 text-center">
           <h1 className="text-2xl font-bold text-ink-800 sm:text-3xl">
-            {SURVEY_THANKS.heading}
+            {thanks.heading}
           </h1>
 
-          <p className="text-lg font-medium text-teal-700">{SURVEY_THANKS.lead}</p>
+          <p className="text-lg font-medium text-teal-700">{thanks.lead}</p>
 
           <p className="wrap-anywhere text-base leading-loose text-ink-600">
-            {SURVEY_THANKS.bodyBefore}
+            {thanks.bodyBefore}
             <strong className="font-bold text-ink-800">
-              {SURVEY_THANKS.bodyEmphasis}
+              {thanks.bodyEmphasis}
             </strong>
           </p>
 
-          <p className="pt-2 text-sm text-ink-400">
-            يمكنك الآن إغلاق هذه الصفحة.
-          </p>
+          <p className="pt-2 text-sm text-ink-400">{messages.thanks.closeNote}</p>
         </CardContent>
       </Card>
     </main>

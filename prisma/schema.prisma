@@ -9,7 +9,7 @@
 // a new live version that starts empty. See `src/lib/questions.ts`.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // "native" covers local development on Windows/macOS; the Debian target is
   // what the Ubuntu 24.04 host actually loads.
   binaryTargets = ["native", "debian-openssl-3.0.x"]
@@ -26,7 +26,8 @@ model Section {
   position Int
   title    String
 
-  questions Question[]
+  questions    Question[]
+  translations SectionTranslation[]
 
   @@index([position])
   @@map("section")
@@ -37,9 +38,9 @@ model Question {
 
   /// Stable across every version of the same question. Two rows sharing a
   /// lineageId are the same question at different points in time.
-  lineageId String @map("lineage_id") @db.Uuid
+  lineageId  String @map("lineage_id") @db.Uuid
   /// 1 for the original, incremented on every edit.
-  version Int
+  version    Int
   /// Human-readable slug for the lineage ("q1"…"q27", then "q28"…). Survives
   /// reordering, so it is an identifier and not a label.
   lineageKey String @map("lineage_key")
@@ -47,13 +48,15 @@ model Question {
   sectionId String @map("section_id") @db.Uuid
   /// Order within the section. The number shown to the respondent is derived
   /// from section order + this, so it changes when questions are reordered.
-  position Int
+  position  Int
 
   /// single | multiple | text
-  type String
-  text String
-  hint String?
-  /// [{ label: string, other?: boolean }] — verbatim answer labels.
+  type    String
+  text    String
+  hint    String?
+  /// [{ id: string, label: string, other?: boolean }] — the source-language
+  /// labels. `id` is stable across languages and across wording edits within a
+  /// version, and is what answers actually reference.
   options Json
 
   /// live | archived | deleted
@@ -65,8 +68,9 @@ model Question {
   createdAt  DateTime  @default(now()) @map("created_at")
   archivedAt DateTime? @map("archived_at")
 
-  section Section        @relation(fields: [sectionId], references: [id], onDelete: Restrict)
-  answers SurveyAnswer[]
+  section      Section               @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  answers      SurveyAnswer[]
+  translations QuestionTranslation[]
 
   @@unique([lineageId, version])
   @@index([status])
@@ -75,15 +79,57 @@ model Question {
   @@map("question")
 }
 
+/// A rendering of one question *version* in another language.
+///
+/// Attached to the version rather than the lineage, so a reworded question
+/// carries its translations forward flagged for review instead of silently
+/// showing the old wording in Hebrew. Editing a translation does not fork a
+/// version: the research question is unchanged, only its rendering.
+model QuestionTranslation {
+  id         String @id @default(uuid()) @db.Uuid
+  questionId String @map("question_id") @db.Uuid
+  /// Never the source language; that lives on the question itself.
+  locale     String
+
+  text         String
+  hint         String?
+  /// { "<optionId>": "<label>" } — keyed by the ids in question.options.
+  optionLabels Json    @map("option_labels")
+
+  /// Set when the source wording changed after this translation was written.
+  needsReview Boolean  @default(false) @map("needs_review")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, locale])
+  @@index([locale])
+  @@map("question_translation")
+}
+
+model SectionTranslation {
+  id        String @id @default(uuid()) @db.Uuid
+  sectionId String @map("section_id") @db.Uuid
+  locale    String
+  title     String
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, locale])
+  @@map("section_translation")
+}
+
 model SurveyResponse {
   /// UUID handed out by the server, never derived from anything about the respondent.
-  id            String   @id @default(uuid()) @db.Uuid
+  id                String   @id @default(uuid()) @db.Uuid
   /// Which edition of the questionnaire this answers.
-  surveyVersion String   @map("survey_version")
-  submittedAt   DateTime @default(now()) @map("submitted_at")
+  surveyVersion     String   @map("survey_version")
+  /// Which language this teacher actually answered in.
+  locale            String   @default("ar")
+  submittedAt       DateTime @default(now()) @map("submitted_at")
   /// Wall-clock seconds from opening the first question to submitting, as
   /// reported by the client. Null when the value was missing or implausible.
-  completionSeconds Int? @map("completion_seconds")
+  completionSeconds Int?     @map("completion_seconds")
 
   // Copied out of the answer rows so the dashboard can filter and group without
   // joining every answer. Sourced from the q1-q4 lineages; left null if an
@@ -97,6 +143,7 @@ model SurveyResponse {
 
   @@index([submittedAt])
   @@index([surveyVersion])
+  @@index([locale])
   @@index([frameworkType])
   @@index([ageGroup])
   @@index([groupSize])
@@ -120,12 +167,17 @@ model SurveyAnswer {
   questionText   String @map("question_text")
   questionType   String @map("question_type")
 
-  /// Chosen option labels, verbatim. Empty for free-text questions.
-  selectedOptions String[] @map("selected_options")
+  /// Chosen option ids. Language-independent, so answers given in Hebrew
+  /// aggregate with the same choice made in Arabic. This is what the dashboard
+  /// counts.
+  selectedOptionIds String[] @map("selected_option_ids")
+  /// The labels as this respondent actually read them, in her language. Kept
+  /// alongside the ids so the stored row still says what was on her screen.
+  selectedOptions   String[] @map("selected_options")
   /// Free-text body.
-  textValue String? @map("text_value")
+  textValue         String?  @map("text_value")
   /// What was typed after picking an "أخرى: __________" option.
-  otherText String? @map("other_text")
+  otherText         String?  @map("other_text")
 
   response SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
   question Question       @relation(fields: [questionId], references: [id], onDelete: Restrict)

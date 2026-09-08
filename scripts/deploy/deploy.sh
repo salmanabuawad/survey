@@ -12,8 +12,14 @@
 #     tar --exclude=node_modules --exclude=.next --exclude=.git --exclude=.env \
 #         -czf /tmp/survey-src.tgz . \
 #       && scp /tmp/survey-src.tgz root@<host>:/tmp/ \
-#       && ssh root@<host> 'tar -xzf /tmp/survey-src.tgz -C /opt/survey \
+#       && ssh root@<host> 'cd /opt/survey \
+#            && rm -rf src scripts prisma content public \
+#            && tar -xzf /tmp/survey-src.tgz -C /opt/survey \
 #            && bash /opt/survey/scripts/deploy/deploy.sh'
+#
+# The `rm -rf` matters: tar overwrites and adds but never deletes, so without it
+# a file deleted from the repo lives on at /opt/survey for ever and keeps being
+# compiled. It only clears trees that come from the tarball.
 #
 # /opt/survey/.env is never part of the tarball and is left untouched.
 

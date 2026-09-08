@@ -7,7 +7,11 @@ import { SurveyIntro } from "@/components/survey/survey-intro";
 import { SurveyThanks } from "@/components/survey/survey-thanks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { LanguageSwitcher } from "@/components/survey/language-switcher";
 import { Progress } from "@/components/ui/progress";
+import type { Locale } from "@/lib/i18n/config";
+import { getMessages } from "@/lib/i18n/messages";
+import type { SurveyCopy } from "@/lib/i18n/survey-copy";
 import { SURVEY_VERSION } from "@/lib/survey-content";
 import type { Questionnaire } from "@/lib/survey-types";
 import { isAnswered, isRequired, type AnswerValue } from "@/lib/validation";
@@ -25,9 +29,18 @@ interface SavedState {
   phase: Phase;
 }
 
-/** One question per screen, advanced with التالي. */
-export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }) {
-  const { sections, questions, totalQuestions } = questionnaire;
+/** One question per screen, advanced with the next button. */
+export function SurveyWizard({
+  questionnaire,
+  copy,
+  availableLocales,
+}: {
+  questionnaire: Questionnaire;
+  copy: SurveyCopy;
+  availableLocales: Locale[];
+}) {
+  const { sections, questions, totalQuestions, locale } = questionnaire;
+  const messages = getMessages(locale);
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [step, setStep] = useState(0);
@@ -136,19 +149,22 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
       <main className="mx-auto flex min-h-dvh max-w-2xl items-center px-4">
         <Card className="w-full">
           <CardContent className="py-16 text-center text-ink-500">
-            الاستبيان غير متاح حالياً.
+            {messages.wizard.unavailable}
           </CardContent>
         </Card>
       </main>
     );
   }
 
-  if (phase === "done") return <SurveyThanks />;
+  if (phase === "done") return <SurveyThanks locale={locale} copy={copy} />;
 
   if (phase === "intro") {
     return (
       <SurveyIntro
         totalQuestions={totalQuestions}
+        locale={locale}
+        copy={copy}
+        availableLocales={availableLocales}
         resumable={restored}
         onStart={() => {
           if (!restored) startedAtRef.current = Date.now();
@@ -174,8 +190,8 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
   const blockedReason = !blocked
     ? null
     : otherPicked
-      ? "يرجى تحديد الإجابة في الخانة المخصصة للمتابعة."
-      : "اختاري إجابة للمتابعة.";
+      ? messages.wizard.specifyOther
+      : messages.wizard.chooseAnswer;
 
   function goNext() {
     if (blocked) return;
@@ -207,6 +223,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           surveyVersion: SURVEY_VERSION,
+          locale,
           completionSeconds: Math.round((Date.now() - startedAtRef.current) / 1000),
           answers,
         }),
@@ -216,7 +233,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
         const body = (await response.json().catch(() => null)) as
           | { message?: string }
           | null;
-        throw new Error(body?.message ?? "تعذر إرسال الاستبيان");
+        throw new Error(body?.message ?? messages.wizard.submitFailed);
       }
 
       try {
@@ -229,7 +246,9 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
     } catch (error) {
       // Let the teacher try again rather than stranding a completed form.
       submittedRef.current = false;
-      setSubmitError(error instanceof Error ? error.message : "تعذر إرسال الاستبيان");
+      setSubmitError(
+        error instanceof Error ? error.message : messages.wizard.submitFailed,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -244,9 +263,15 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
         className="scroll-mt-4 outline-none"
         aria-live="polite"
       >
+        <LanguageSwitcher
+          current={locale}
+          available={availableLocales}
+          className="mb-4 justify-end"
+        />
+
         <div className="mb-2 flex items-baseline justify-between gap-3 text-sm text-ink-500">
           <span className="rounded-full bg-teal-100 px-3 py-1 font-semibold text-teal-800">
-            السؤال {safeStep + 1} من {questions.length}
+            {messages.wizard.questionOf(safeStep + 1, questions.length)}
           </span>
           {/* Forced LTR: bidi would otherwise reorder "0 / 27" into "27 / 0". */}
           <span dir="ltr" className="inline-block tabular-nums">
@@ -257,13 +282,13 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
         <Progress
           value={answeredCount}
           max={totalQuestions}
-          label={`تقدّمك في الاستبيان: ${answeredCount} من ${totalQuestions} سؤالاً`}
+          label={messages.wizard.progressLabel(answeredCount, totalQuestions)}
           className="mb-5"
         />
 
         {/* One dot per section, not per question — 27 would be unreadable.
             Each jumps to the first question of its section. */}
-        <ol className="mb-6 flex flex-wrap gap-1.5" aria-label="أقسام الاستبيان">
+        <ol className="mb-6 flex flex-wrap gap-1.5" aria-label={messages.wizard.sectionsLabel}>
           {sections.map((item, index) => {
             const complete =
               item.questions.some((q) => isAnswered(q, answers[q.id])) &&
@@ -278,7 +303,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
                     focusTop();
                   }}
                   aria-current={current ? "step" : undefined}
-                  aria-label={`${item.title}${complete ? " (مكتمل)" : ""}`}
+                  aria-label={`${item.title}${complete ? ` (${messages.wizard.sectionComplete})` : ""}`}
                   className={
                     "h-2.5 rounded-full transition-all duration-300 " +
                     (current
@@ -306,7 +331,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
           role="status"
           className="mt-4 rounded-xl2 border border-violet-200 bg-violet-50 p-4 text-sm text-violet-800"
         >
-          تم استرجاع إجاباتك السابقة على هذا الجهاز، يمكنك المتابعة من حيث توقفت.
+          {messages.wizard.restored}
         </div>
       ) : null}
 
@@ -319,6 +344,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
               question={question}
               answer={answers[question.id]}
               onChange={(value) => setAnswer(question.id, value)}
+              locale={locale}
             />
           </CardContent>
         </Card>
@@ -348,7 +374,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
               onClick={goPrevious}
               className="flex-1 sm:flex-none"
             >
-              السابق
+              {messages.wizard.previous}
             </Button>
 
             {isLast ? (
@@ -359,11 +385,11 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
                 aria-busy={submitting}
                 className="flex-1"
               >
-                {submitting ? "جارٍ الإرسال…" : "إرسال الاستبيان"}
+                {submitting ? messages.wizard.submitting : messages.wizard.submit}
               </Button>
             ) : (
               <Button onClick={goNext} disabled={blocked} className="flex-1">
-                التالي
+                {messages.wizard.next}
               </Button>
             )}
           </div>
