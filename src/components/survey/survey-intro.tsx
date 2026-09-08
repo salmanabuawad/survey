@@ -1,11 +1,8 @@
 "use client";
 
-import { LanguageSwitcher } from "@/components/survey/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Locale } from "@/lib/i18n/config";
-import { getMessages } from "@/lib/i18n/messages";
-import type { SurveyCopy } from "@/lib/i18n/survey-copy";
+import { SURVEY_INTRO } from "@/lib/survey-content";
 
 /** Abstract motif: overlapping soft shapes, no clip-art and nothing childish. */
 function Motif() {
@@ -46,41 +43,31 @@ export function SurveyIntro({
   onStart,
   resumable,
   totalQuestions,
-  locale,
-  copy,
-  availableLocales,
 }: {
   onStart: () => void;
   resumable: boolean;
   totalQuestions: number;
-  locale: Locale;
-  copy: SurveyCopy;
-  availableLocales: Locale[];
 }) {
-  const messages = getMessages(locale);
-  const intro = copy.intro;
-
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
       <Card className="animate-rise overflow-hidden">
-        <div className="bg-gradient-to-bl from-teal-100 via-cream-50 to-violet-100 px-5 pt-6 sm:px-8">
-          <LanguageSwitcher current={locale} available={availableLocales} />
+        <div className="bg-gradient-to-bl from-teal-100 via-cream-50 to-violet-100 px-5 pt-8 sm:px-8">
           <Motif />
         </div>
 
         <CardContent className="space-y-6 pt-7">
           <header className="space-y-3">
             <h1 className="wrap-anywhere text-2xl font-bold leading-snug text-ink-800 sm:text-3xl">
-              {intro.title}
+              {SURVEY_INTRO.title}
             </h1>
             <p className="wrap-anywhere text-base font-medium text-teal-700 sm:text-lg">
-              {intro.subtitle}
+              {SURVEY_INTRO.subtitle}
             </p>
           </header>
 
           <div className="space-y-4 text-base leading-loose text-ink-600">
-            <p className="font-semibold text-ink-800">{intro.salutation}</p>
-            {intro.paragraphs.map((paragraph) => (
+            <p className="font-semibold text-ink-800">{SURVEY_INTRO.salutation}</p>
+            {SURVEY_INTRO.paragraphs.map((paragraph) => (
               <p key={paragraph} className="wrap-anywhere">
                 {paragraph}
               </p>
@@ -88,28 +75,28 @@ export function SurveyIntro({
           </div>
 
           <p className="wrap-anywhere rounded-xl2 border border-teal-200 bg-teal-50 p-4 text-sm font-bold text-teal-800 sm:text-base">
-            {intro.notice}
+            {SURVEY_INTRO.notice}
           </p>
 
           <dl className="grid grid-cols-2 gap-3 text-center">
             <div className="rounded-xl2 border border-teal-100 bg-gradient-to-bl from-teal-50 to-teal-100/70 p-4">
-              <dt className="text-sm font-medium text-teal-700">{messages.intro.questionCount}</dt>
+              <dt className="text-sm font-medium text-teal-700">عدد الأسئلة</dt>
               <dd className="text-xl font-bold text-teal-900 tabular-nums">
                 {totalQuestions}
               </dd>
             </div>
             <div className="rounded-xl2 border border-violet-100 bg-gradient-to-bl from-violet-50 to-violet-100/70 p-4">
-              <dt className="text-sm font-medium text-violet-700">{messages.intro.approximateTime}</dt>
-              <dd className="text-xl font-bold text-violet-900">{messages.intro.tenMinutes}</dd>
+              <dt className="text-sm font-medium text-violet-700">الوقت التقريبي</dt>
+              <dd className="text-xl font-bold text-violet-900">10 دقائق</dd>
             </div>
           </dl>
 
           <Button size="lg" onClick={onStart} className="w-full">
-            {resumable ? messages.intro.resume : messages.intro.start}
+            {resumable ? "متابعة الاستبيان" : "ابدأ الاستبيان"}
           </Button>
 
           <p className="text-center text-sm text-ink-400">
-            {messages.intro.autosaveNote}
+            تُحفظ إجاباتك تلقائياً على هذا الجهاز حتى تنهي الاستبيان.
           </p>
         </CardContent>
       </Card>

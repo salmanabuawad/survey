@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
-import { getMessages } from "@/lib/i18n/messages";
 import { getQuestionnaire } from "@/lib/questions";
 import { normaliseSubmission, submissionSchema } from "@/lib/validation";
 
@@ -19,43 +18,37 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ message: "Bad request" }, { status: 400 });
+    return NextResponse.json({ message: "طلب غير صالح" }, { status: 400 });
   }
 
   const parsed = submissionSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
-      { message: "Validation failed", issues: parsed.error.issues },
+      { message: "تعذر التحقق من الإجابات", issues: parsed.error.issues },
       { status: 400 },
     );
   }
 
-  const messages = getMessages(parsed.data.locale);
-
-  // Validate against the questionnaire as it stands right now, in the language
-  // this tab is showing — an admin may have edited it since the page loaded.
-  const { questions } = await getQuestionnaire(parsed.data.locale);
+  // Validate against the questionnaire as it stands right now, not against a
+  // copy in code — an admin may have edited it since this tab loaded.
+  const { questions } = await getQuestionnaire();
   if (questions.length === 0) {
-    return NextResponse.json({ message: messages.wizard.unavailable }, { status: 503 });
+    return NextResponse.json({ message: "الاستبيان غير متاح حالياً" }, { status: 503 });
   }
 
   const normalised = normaliseSubmission(parsed.data, questions);
   if (!normalised.ok) {
-    // The one failure a respondent can actually act on is a questionnaire that
-    // changed under her; everything else means a hand-rolled request.
-    const stale = normalised.errors.includes("STALE_QUESTIONNAIRE");
     return NextResponse.json(
-      { message: stale ? messages.wizard.staleQuestionnaire : messages.wizard.submitFailed },
+      { message: normalised.errors[0] ?? "تعذر التحقق من الإجابات" },
       { status: 400 },
     );
   }
 
   // The four profile questions back the dashboard filters. They are matched by
   // lineage key, so they keep working across edits and survive reordering.
-  // Stored as option ids so the filters group Hebrew and Arabic answers together.
   const pick = (key: string): string | null =>
     normalised.answers.find((answer) => answer.questionKey === key)
-      ?.selectedOptionIds[0] ?? null;
+      ?.selectedOptions[0] ?? null;
 
   const completionSeconds = parsed.data.completionSeconds ?? null;
 
@@ -66,7 +59,6 @@ export async function POST(request: Request) {
       const created = await tx.surveyResponse.create({
         data: {
           surveyVersion: parsed.data.surveyVersion,
-          locale: parsed.data.locale,
           completionSeconds:
             completionSeconds !== null && completionSeconds > 0
               ? completionSeconds
@@ -88,7 +80,6 @@ export async function POST(request: Request) {
           // what this respondent actually read.
           questionText: answer.questionText,
           questionType: answer.questionType,
-          selectedOptionIds: answer.selectedOptionIds,
           selectedOptions: answer.selectedOptions,
           textValue: answer.textValue,
           otherText: answer.otherText,
@@ -102,7 +93,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("survey submission failed", error);
     return NextResponse.json(
-      { message: messages.wizard.submitFailed },
+      { message: "تعذر حفظ الاستبيان، يرجى المحاولة مرة أخرى" },
       { status: 500 },
     );
   }

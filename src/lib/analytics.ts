@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { LOCALE_META, type Locale } from "@/lib/i18n/config";
 import { getAllQuestionVersions } from "@/lib/questions";
 import type { QuestionStatus, QuestionType } from "@/lib/survey-types";
 
@@ -8,18 +7,9 @@ export interface Filters {
   ageGroup?: string;
   groupSize?: string;
   experience?: string;
-  /** Restrict to responses given in one language. */
-  locale?: string;
-}
-
-/** A filter choice: stored as an option id, shown as its source-language label. */
-export interface FilterChoice {
-  value: string;
-  label: string;
 }
 
 export interface OptionTally {
-  id: string;
   label: string;
   count: number;
   /** Share of the responses that answered this question version, 0-100. */
@@ -64,10 +54,7 @@ export interface Stats {
   medianCompletionSeconds: number | null;
   distributions: QuestionDistribution[];
   openText: OpenTextQuestion[];
-  filterOptions: Record<string, FilterChoice[]>;
-  localeOptions: FilterChoice[];
-  /** How many responses came in through each language. */
-  byLocale: Array<{ locale: string; label: string; count: number }>;
+  filterOptions: Record<string, string[]>;
   appliedFilters: Filters;
   /** Question versions that are archived or deleted but still hold answers. */
   archivedWithData: number;
@@ -79,7 +66,6 @@ function whereFromFilters(filters: Filters) {
     ...(filters.ageGroup ? { ageGroup: filters.ageGroup } : {}),
     ...(filters.groupSize ? { groupSize: filters.groupSize } : {}),
     ...(filters.experience ? { experience: filters.experience } : {}),
-    ...(filters.locale ? { locale: filters.locale } : {}),
   };
 }
 
@@ -92,11 +78,10 @@ export async function getStats(filters: Filters): Promise<Stats> {
         id: true,
         submittedAt: true,
         completionSeconds: true,
-        locale: true,
         answers: {
           select: {
             questionId: true,
-            selectedOptionIds: true,
+            selectedOptions: true,
             textValue: true,
             otherText: true,
           },
@@ -158,7 +143,7 @@ export async function getStats(filters: Filters): Promise<Stats> {
     Array<{
       responseId: string;
       submittedAt: Date;
-      selectedOptionIds: string[];
+      selectedOptions: string[];
       textValue: string | null;
       otherText: string | null;
     }>
@@ -170,7 +155,7 @@ export async function getStats(filters: Filters): Promise<Stats> {
       const entry = {
         responseId: response.id,
         submittedAt: response.submittedAt,
-        selectedOptionIds: answer.selectedOptionIds,
+        selectedOptions: answer.selectedOptions,
         textValue: answer.textValue,
         otherText: answer.otherText,
       };
@@ -214,17 +199,17 @@ export async function getStats(filters: Filters): Promise<Stats> {
       continue;
     }
 
-    // Counted by option id, so the same choice made in Arabic and in Hebrew
-    // lands in one bucket. Labels come from the source language.
-    const counts = new Map<string, number>(question.options.map((o) => [o.id, 0]));
+    const counts = new Map<string, number>(
+      question.options.map((option) => [option.label, 0]),
+    );
     const otherTexts: string[] = [];
     let answered = 0;
 
     for (const entry of bucket) {
-      if (entry.selectedOptionIds.length === 0) continue;
+      if (entry.selectedOptions.length === 0) continue;
       answered += 1;
-      for (const id of entry.selectedOptionIds) {
-        counts.set(id, (counts.get(id) ?? 0) + 1);
+      for (const label of entry.selectedOptions) {
+        counts.set(label, (counts.get(label) ?? 0) + 1);
       }
       const other = entry.otherText?.trim();
       if (other) otherTexts.push(other);
@@ -242,9 +227,8 @@ export async function getStats(filters: Filters): Promise<Stats> {
       // Percentages are of respondents, not of picks, so a multi-select column
       // reads as "63% of teachers chose this" and the total may exceed 100%.
       options: question.options.map((option) => {
-        const count = counts.get(option.id) ?? 0;
+        const count = counts.get(option.label) ?? 0;
         return {
-          id: option.id,
           label: option.label,
           count,
           percent: answered > 0 ? Math.round((count / answered) * 1000) / 10 : 0,
@@ -257,7 +241,7 @@ export async function getStats(filters: Filters): Promise<Stats> {
   // --- filter dropdown contents --------------------------------------------
   // Drawn from the live q1-q4 options rather than from the data, so a filter
   // never silently disappears just because nobody has picked it yet.
-  const filterOptions: Record<string, FilterChoice[]> = {};
+  const filterOptions: Record<string, string[]> = {};
   for (const [key, field] of [
     ["q1", "frameworkType"],
     ["q2", "ageGroup"],
@@ -267,30 +251,8 @@ export async function getStats(filters: Filters): Promise<Stats> {
     const question = versions.find(
       (candidate) => candidate.lineageKey === key && candidate.status === "live",
     );
-    filterOptions[field] = (question?.options ?? []).map((option) => ({
-      value: option.id,
-      label: option.label,
-    }));
+    filterOptions[field] = (question?.options ?? []).map((option) => option.label);
   }
-
-  // --- language breakdown ---------------------------------------------------
-  const localeCounts = new Map<string, number>();
-  for (const response of responses) {
-    localeCounts.set(response.locale, (localeCounts.get(response.locale) ?? 0) + 1);
-  }
-
-  const byLocale = [...localeCounts.entries()]
-    .map(([locale, count]) => ({
-      locale,
-      label: LOCALE_META[locale as Locale]?.label ?? locale,
-      count,
-    }))
-    .sort((a, b) => b.count - a.count);
-
-  const localeOptions = Object.entries(LOCALE_META).map(([value, meta]) => ({
-    value,
-    label: meta.label,
-  }));
 
   return {
     total,
@@ -300,8 +262,6 @@ export async function getStats(filters: Filters): Promise<Stats> {
     distributions,
     openText,
     filterOptions,
-    localeOptions,
-    byLocale,
     appliedFilters: filters,
     archivedWithData,
   };
@@ -327,7 +287,6 @@ export async function buildCsv(filters: Filters): Promise<string> {
     "response_id",
     "submitted_at",
     "survey_version",
-    "language",
     "completion_seconds",
     ...versions.map((question) => {
       const label = `${question.number}. ${question.text}`;
@@ -344,17 +303,12 @@ export async function buildCsv(filters: Filters): Promise<string> {
       response.id,
       response.submittedAt.toISOString(),
       response.surveyVersion,
-      response.locale,
       response.completionSeconds?.toString() ?? "",
       ...versions.map((question) => {
         const answer = byQuestion.get(question.id);
         if (!answer) return "";
         if (answer.questionType === "text") return answer.textValue ?? "";
-
-        // Source-language labels, not the ones this respondent saw, so a Hebrew
-        // and an Arabic response are directly comparable in the same column.
-        const byId = new Map(question.options.map((option) => [option.id, option]));
-        const labels = answer.selectedOptionIds.map((id) => byId.get(id)?.label ?? id);
+        const labels = [...answer.selectedOptions];
         // Keep the typed text next to the option it belongs to.
         if (answer.otherText) {
           const index = labels.findIndex((label) => label.includes("__________"));

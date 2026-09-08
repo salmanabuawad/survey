@@ -21,8 +21,6 @@ const FILTER_LABELS: Array<{ field: string; label: string }> = [
   { field: "experience", label: "سنوات الخبرة" },
 ];
 
-/** Filter values are option ids, so they match answers given in any language. */
-
 type Tab = "overview" | "questions" | "text";
 
 export function AdminDashboard({ stats }: { stats: Stats }) {
@@ -92,27 +90,6 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="filter-locale"
-                className="block text-sm font-medium text-ink-600"
-              >
-                لغة التعبئة
-              </label>
-              <Select
-                id="filter-locale"
-                value={stats.appliedFilters.locale ?? ""}
-                onChange={(event) => setFilter("locale", event.target.value)}
-              >
-                <option value="">الكل</option>
-                {stats.localeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
             {FILTER_LABELS.map(({ field, label }) => (
               <div key={field} className="space-y-1.5">
                 <label
@@ -132,8 +109,8 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
                 >
                   <option value="">الكل</option>
                   {(stats.filterOptions[field] ?? []).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </Select>
@@ -173,19 +150,6 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
           tone="coral"
         />
       </div>
-
-      {/* Responses arrive in several languages but aggregate into one set of
-          charts, because answers are stored as option ids. */}
-      {stats.byLocale.length > 1 ? (
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-xl2 border border-cream-200 bg-white/70 p-4 text-sm">
-          <span className="font-semibold text-ink-700">الردود حسب اللغة:</span>
-          {stats.byLocale.map((entry) => (
-            <Badge key={entry.locale} tone="teal">
-              {entry.label} · {entry.count}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
 
       {/* --- tabs ----------------------------------------------------------- */}
       <div

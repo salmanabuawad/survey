@@ -1,18 +1,14 @@
 import { z } from "zod";
 
-import { LOCALES } from "./i18n/config";
 import { MAX_OTHER_LENGTH, MAX_TEXT_LENGTH } from "./limits";
 import type { RuntimeQuestion } from "./survey-types";
 
 export type AnswerValue = {
-  /**
-   * Chosen option *ids*, not labels. Ids are the same in every language, so a
-   * Hebrew answer aggregates with the same choice made in Arabic.
-   */
+  /** Option labels the respondent picked, verbatim. */
   selected?: string[];
   /** Body of a free-text question. */
   text?: string;
-  /** What was typed after choosing an "other" option. */
+  /** What was typed after choosing an "أخرى: __________" option. */
   other?: string;
 };
 
@@ -27,7 +23,6 @@ export const answerSchema = z
 export const submissionSchema = z
   .object({
     surveyVersion: z.string().min(1).max(120),
-    locale: z.enum(LOCALES),
     /** Seconds spent filling the form, measured on the client. */
     completionSeconds: z.number().int().min(0).max(60 * 60 * 24).nullable().optional(),
     /** Keyed by question *version* id, so an edit mid-session cannot mis-file. */
@@ -43,17 +38,15 @@ export interface NormalisedAnswer {
   questionNumber: number;
   questionText: string;
   questionType: string;
-  selectedOptionIds: string[];
-  /** Labels exactly as this respondent read them, in her language. */
   selectedOptions: string[];
   textValue: string | null;
   otherText: string | null;
 }
 
 /**
- * Rejects anything that is not an option of the live questionnaire. The client
- * is not trusted to send option identity: a mismatch means either a stale tab
- * or a hand-rolled request, and either way the row would corrupt the analysis.
+ * Rejects anything that is not a label from the live questionnaire. The client
+ * is not trusted to send option text: a mismatch means either a stale tab or a
+ * hand-rolled request, and either way the row would corrupt the analysis.
  */
 export function normaliseSubmission(
   submission: Submission,
@@ -66,7 +59,7 @@ export function normaliseSubmission(
   for (const key of Object.keys(submission.answers)) {
     if (!byId.has(key)) {
       // Most likely an admin edited the questionnaire while this tab was open.
-      errors.push("STALE_QUESTIONNAIRE");
+      errors.push("تم تحديث الاستبيان أثناء تعبئته، يرجى إعادة تحميل الصفحة.");
       break;
     }
   }
@@ -90,7 +83,6 @@ function normaliseAnswer(
     questionId: question.id,
     questionKey: question.lineageKey,
     questionNumber: question.number,
-    // Snapshot in the language this respondent actually read.
     questionText: question.text,
     questionType: question.type,
   };
@@ -99,34 +91,39 @@ function normaliseAnswer(
     const text = raw?.text?.trim() ?? "";
     return {
       ...base,
-      selectedOptionIds: [],
       selectedOptions: [],
       textValue: text.length > 0 ? text : null,
       otherText: null,
     };
   }
 
-  const byId = new Map(question.options.map((option) => [option.id, option]));
+  const labels = new Set(question.options.map((option) => option.label));
+  const otherLabels = new Set(
+    question.options.filter((option) => option.other).map((option) => option.label),
+  );
+
   const selected = (raw?.selected ?? []).map((value) => value.trim()).filter(Boolean);
 
-  for (const id of selected) {
-    if (!byId.has(id)) errors.push(`UNKNOWN_OPTION:${question.number}`);
+  for (const value of selected) {
+    if (!labels.has(value)) {
+      errors.push(`إجابة غير معروفة للسؤال ${question.number}`);
+    }
   }
 
   if (question.type === "single" && selected.length > 1) {
-    errors.push(`TOO_MANY:${question.number}`);
+    errors.push(`السؤال ${question.number} يقبل إجابة واحدة فقط`);
   }
 
-  // Keep the questionnaire's own option order, and drop duplicates.
-  const chosen = question.options.filter((option) => selected.includes(option.id));
-  const otherPicked = chosen.some((option) => option.other);
+  const otherPicked = selected.some((value) => otherLabels.has(value));
 
   return {
     ...base,
-    selectedOptionIds: chosen.map((option) => option.id),
-    selectedOptions: chosen.map((option) => option.label),
+    // Keep the order the options appear in, and drop duplicates.
+    selectedOptions: question.options
+      .map((option) => option.label)
+      .filter((label) => selected.includes(label)),
     textValue: null,
-    otherText: otherPicked ? raw?.other?.trim() || null : null,
+    otherText: otherPicked ? (raw?.other?.trim() || null) : null,
   };
 }
 
@@ -144,11 +141,11 @@ export function isAnswered(
   const selected = answer?.selected ?? [];
   if (selected.length === 0) return false;
 
-  // Picking "other" without saying what it is leaves the answer unusable.
-  const otherIds = question.options
+  // Picking "أخرى" without saying what it is leaves the answer unusable.
+  const otherLabels = question.options
     .filter((option) => option.other)
-    .map((option) => option.id);
-  if (selected.some((id) => otherIds.includes(id))) {
+    .map((option) => option.label);
+  if (selected.some((value) => otherLabels.includes(value))) {
     return (answer?.other?.trim().length ?? 0) > 0;
   }
 

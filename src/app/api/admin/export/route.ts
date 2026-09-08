@@ -17,7 +17,6 @@ export async function GET(request: Request) {
     ageGroup: params.get("ageGroup") || undefined,
     groupSize: params.get("groupSize") || undefined,
     experience: params.get("experience") || undefined,
-    locale: params.get("locale") || undefined,
   };
 
   const csv = await buildCsv(filters);

@@ -4,26 +4,15 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/field";
-import type { QuestionType, RuntimeQuestion } from "@/lib/survey-types";
+import type { QuestionType, RuntimeOption, RuntimeQuestion } from "@/lib/survey-types";
 import { cn } from "@/lib/utils";
-
-/**
- * An option being edited. `id` is absent only for one the admin has just added;
- * carrying it through the form is what lets a renamed option keep its answers
- * instead of being treated as a new choice.
- */
-export interface DraftOption {
-  id?: string;
-  label: string;
-  other?: boolean;
-}
 
 export interface QuestionDraft {
   sectionId: string;
   type: QuestionType;
   text: string;
   hint: string;
-  options: DraftOption[];
+  options: RuntimeOption[];
 }
 
 export function draftFrom(
@@ -35,15 +24,13 @@ export function draftFrom(
     type: question?.type ?? "single",
     text: question?.text ?? "",
     hint: question?.hint ?? "",
-    options: question
-      ? question.options.map((option) => ({ ...option }))
-      : [{ label: "" }, { label: "" }],
+    options: question ? question.options.map((o) => ({ ...o })) : [{ label: "" }, { label: "" }],
   };
 }
 
 /** True when saving this draft would fork a new version rather than just move it. */
 export function wouldFork(question: RuntimeQuestion, draft: QuestionDraft): boolean {
-  const normalise = (options: DraftOption[]) =>
+  const normalise = (options: RuntimeOption[]) =>
     JSON.stringify(
       options
         .map((o) => ({
@@ -86,7 +73,7 @@ export function QuestionEditor({
   const [confirmFork, setConfirmFork] = useState(false);
   const forking = editing ? wouldFork(editing, draft) : false;
 
-  function setOption(index: number, next: Partial<DraftOption>) {
+  function setOption(index: number, next: Partial<RuntimeOption>) {
     const options = draft.options.map((option, i) =>
       i === index ? { ...option, ...next } : option,
     );

@@ -12,8 +12,6 @@ export const questionInputSchema = z
     options: z
       .array(
         z.object({
-          // Absent for a newly added option; the server assigns one.
-          id: z.string().trim().max(120).optional(),
           label: z.string().trim().min(1).max(MAX_OTHER_LENGTH),
           other: z.boolean().optional(),
         }),

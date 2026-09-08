@@ -5,9 +5,8 @@ import { useId } from "react";
 import { BidiText } from "@/components/survey/bidi-text";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/field";
-import type { Locale } from "@/lib/i18n/config";
-import { getMessages } from "@/lib/i18n/messages";
 import { MAX_OTHER_LENGTH, MAX_TEXT_LENGTH } from "@/lib/limits";
+import { FREE_TEXT_PRIVACY_HINT } from "@/lib/survey-content";
 import type { RuntimeQuestion } from "@/lib/survey-types";
 import { cn } from "@/lib/utils";
 import type { AnswerValue } from "@/lib/validation";
@@ -16,7 +15,6 @@ interface QuestionCardProps {
   question: RuntimeQuestion;
   answer: AnswerValue | undefined;
   onChange: (value: AnswerValue) => void;
-  locale: Locale;
   /** Set once the respondent tries to leave a step with this question empty. */
   invalid?: boolean;
 }
@@ -25,25 +23,22 @@ export function QuestionCard({
   question,
   answer,
   onChange,
-  locale,
   invalid = false,
 }: QuestionCardProps) {
   const groupId = useId();
-  const messages = getMessages(locale);
-  // Selections are option ids, so they survive a language switch.
   const selected = answer?.selected ?? [];
   const otherOption = question.options.find((option) => option.other);
-  const otherPicked = otherOption ? selected.includes(otherOption.id) : false;
+  const otherPicked = otherOption ? selected.includes(otherOption.label) : false;
   const errorId = `${groupId}-error`;
 
-  function toggle(id: string) {
+  function toggle(label: string) {
     if (question.type === "single") {
-      onChange({ ...answer, selected: [id] });
+      onChange({ ...answer, selected: [label] });
       return;
     }
-    const next = selected.includes(id)
-      ? selected.filter((value) => value !== id)
-      : [...selected, id];
+    const next = selected.includes(label)
+      ? selected.filter((value) => value !== label)
+      : [...selected, label];
     onChange({ ...answer, selected: next });
   }
 
@@ -66,7 +61,7 @@ export function QuestionCard({
           // Instruction line carried over from the questionnaire itself.
           <span className="text-sm font-medium text-teal-700">{question.hint}</span>
         ) : question.type === "multiple" ? (
-          <Badge tone="violet">{messages.wizard.multipleChoice}</Badge>
+          <Badge tone="violet">اختيار متعدد</Badge>
         ) : null}
       </div>
 
@@ -82,15 +77,15 @@ export function QuestionCard({
             className={cn(invalid && "border-coral-400")}
             rows={5}
           />
-          <p className="mt-2 text-sm text-ink-400">{messages.wizard.privacyHint}</p>
+          <p className="mt-2 text-sm text-ink-400">{FREE_TEXT_PRIVACY_HINT}</p>
         </div>
       ) : (
         <div className="grid gap-2.5 sm:ps-11">
           {question.options.map((option) => {
-            const checked = selected.includes(option.id);
-            const inputId = `${groupId}-${option.id}`;
+            const checked = selected.includes(option.label);
+            const inputId = `${groupId}-${option.label}`;
             return (
-              <div key={option.id}>
+              <div key={option.label}>
                 <label
                   htmlFor={inputId}
                   className={cn(
@@ -108,7 +103,7 @@ export function QuestionCard({
                     type={question.type === "single" ? "radio" : "checkbox"}
                     name={question.type === "single" ? groupId : inputId}
                     checked={checked}
-                    onChange={() => toggle(option.id)}
+                    onChange={() => toggle(option.label)}
                     aria-invalid={invalid || undefined}
                     className="sr-only"
                   />
@@ -181,9 +176,11 @@ export function QuestionCard({
           role="alert"
           className="mt-3 text-sm font-medium text-coral-600 sm:ps-11"
         >
-          {otherPicked
-            ? messages.wizard.specifyOther
-            : messages.wizard.chooseAnswer}
+          {question.type === "text"
+            ? "يرجى كتابة إجابتك للمتابعة."
+            : otherPicked
+              ? "يرجى تحديد الإجابة في الخانة المخصصة."
+              : "يرجى اختيار إجابة للمتابعة."}
         </p>
       ) : null}
     </fieldset>
