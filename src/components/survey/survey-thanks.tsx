@@ -5,7 +5,7 @@ export function SurveyThanks() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl items-center px-4 py-12 sm:px-6">
       <Card className="animate-rise w-full overflow-hidden">
-        <div className="flex justify-center bg-gradient-to-bl from-teal-50 via-cream-50 to-violet-50 pt-10">
+        <div className="flex justify-center bg-gradient-to-bl from-teal-100 via-cream-50 to-violet-100 pt-10">
           <svg
             viewBox="0 0 96 96"
             role="presentation"

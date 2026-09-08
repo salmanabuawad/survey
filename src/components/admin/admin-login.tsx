@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { BrandMark } from "@/components/brand/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
@@ -41,8 +42,11 @@ export function AdminLogin() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md items-center px-4">
-      <Card className="w-full">
-        <CardContent className="space-y-5 pt-7">
+      <Card className="w-full overflow-hidden">
+        <div className="flex justify-center bg-gradient-to-bl from-teal-100 via-cream-50 to-violet-100 pt-8 pb-2">
+          <BrandMark />
+        </div>
+        <CardContent className="space-y-5 pt-6">
           <div className="space-y-1">
             <h1 className="text-xl font-bold text-ink-800">لوحة التحكم</h1>
             <p className="text-sm text-ink-500">

@@ -25,12 +25,12 @@ export function Progress({
       aria-valuemax={max}
       aria-label={label}
       className={cn(
-        "h-2 w-full overflow-hidden rounded-full bg-cream-200",
+        "h-3 w-full overflow-hidden rounded-full bg-cream-200 ring-1 ring-cream-200/80",
         className,
       )}
     >
       <div
-        className="h-full rounded-full bg-gradient-to-l from-teal-400 via-teal-500 to-violet-500 transition-[width] duration-500 ease-out"
+        className="h-full rounded-full bg-gradient-to-l from-coral-400 via-teal-500 to-violet-500 transition-[width] duration-500 ease-out"
         style={{ width: `${percent}%` }}
       />
     </div>

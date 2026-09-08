@@ -124,7 +124,7 @@ export function DistributionChart({
     <Card>
       <CardContent className="pt-5 sm:pt-6">
         <div className="mb-1 flex flex-wrap items-start gap-x-3 gap-y-2">
-          <span className="flex min-h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 px-2 text-xs font-bold text-teal-800 tabular-nums">
+          <span className="flex min-h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-bl from-teal-200 to-teal-100 px-2 text-xs font-bold text-teal-800 tabular-nums">
             {distribution.number}
           </span>
           <h3 className="wrap-anywhere flex-1 text-base font-bold text-ink-800">

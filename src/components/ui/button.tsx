@@ -10,12 +10,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-teal-600 text-white shadow-warm hover:bg-teal-700 hover:shadow-warm-lg",
+          "bg-gradient-to-l from-teal-700 to-teal-500 text-white shadow-warm hover:from-teal-800 hover:to-teal-600 hover:shadow-warm-lg",
         secondary:
-          "border border-cream-200 bg-white/80 text-ink-600 hover:border-teal-300 hover:bg-white",
-        ghost: "text-ink-500 hover:bg-cream-100 hover:text-ink-700",
+          "border border-cream-200 bg-white/85 text-ink-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800",
+        ghost: "text-ink-500 hover:bg-violet-50 hover:text-violet-800",
         coral:
-          "bg-coral-500 text-white shadow-warm hover:bg-coral-600 hover:shadow-warm-lg",
+          "bg-gradient-to-l from-coral-600 to-coral-400 text-white shadow-warm hover:from-coral-700 hover:to-coral-500 hover:shadow-warm-lg",
       },
       size: {
         default: "min-h-12",

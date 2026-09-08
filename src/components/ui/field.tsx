@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full rounded-xl border border-cream-200 bg-white px-4 py-3 text-base text-ink-700 placeholder:text-ink-400/70 transition-colors focus:border-teal-400 focus:outline-none focus-visible:outline-none disabled:opacity-50";
+  "w-full rounded-xl border border-cream-200 bg-white px-4 py-3 text-base text-ink-700 placeholder:text-ink-400/70 transition-colors focus:border-teal-400 focus:ring-2 focus:ring-teal-200 focus:outline-none focus-visible:outline-none disabled:opacity-50";
 
 export const Input = React.forwardRef<
   HTMLInputElement,

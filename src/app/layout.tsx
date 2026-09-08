@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 
+import { SiteChrome } from "@/components/brand/site-chrome";
 import { SURVEY_INTRO } from "@/lib/survey-content";
 
 import "./globals.css";
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#fdfaf6",
+  themeColor: "#14786f",
   // Teachers zoom into Arabic text on small phones; never block that.
   maximumScale: 5,
 };
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={plexArabic.variable}>
       <body className="min-h-dvh overflow-x-hidden font-sans antialiased">
+        <SiteChrome />
         {children}
       </body>
     </html>

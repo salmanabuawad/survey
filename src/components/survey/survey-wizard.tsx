@@ -236,7 +236,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-6 sm:px-6 sm:pt-10">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-8 sm:px-6 sm:pt-12">
       {/* --- header ------------------------------------------------------- */}
       <div
         ref={headingRef}
@@ -245,7 +245,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
         aria-live="polite"
       >
         <div className="mb-2 flex items-baseline justify-between gap-3 text-sm text-ink-500">
-          <span className="font-semibold text-teal-700">
+          <span className="rounded-full bg-teal-100 px-3 py-1 font-semibold text-teal-800">
             السؤال {safeStep + 1} من {questions.length}
           </span>
           {/* Forced LTR: bidi would otherwise reorder "0 / 27" into "27 / 0". */}
@@ -334,7 +334,7 @@ export function SurveyWizard({ questionnaire }: { questionnaire: Questionnaire }
       ) : null}
 
       {/* --- navigation --------------------------------------------------- */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-cream-200 bg-cream-50/95 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-teal-100 bg-white/90 shadow-[0_-12px_32px_-16px_rgba(19,75,71,0.22)] backdrop-blur-md">
         <div className="mx-auto max-w-2xl px-4 py-3 sm:px-6">
           {blockedReason ? (
             <p className="mb-2 text-center text-sm text-ink-400" aria-live="polite">

@@ -51,7 +51,7 @@ export function SurveyIntro({
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
       <Card className="animate-rise overflow-hidden">
-        <div className="bg-gradient-to-bl from-teal-50 via-cream-50 to-violet-50 px-5 pt-8 sm:px-8">
+        <div className="bg-gradient-to-bl from-teal-100 via-cream-50 to-violet-100 px-5 pt-8 sm:px-8">
           <Motif />
         </div>
 
@@ -79,15 +79,15 @@ export function SurveyIntro({
           </p>
 
           <dl className="grid grid-cols-2 gap-3 text-center">
-            <div className="rounded-xl2 bg-cream-100 p-4">
-              <dt className="text-sm text-ink-500">عدد الأسئلة</dt>
-              <dd className="text-xl font-bold text-ink-800 tabular-nums">
+            <div className="rounded-xl2 border border-teal-100 bg-gradient-to-bl from-teal-50 to-teal-100/70 p-4">
+              <dt className="text-sm font-medium text-teal-700">عدد الأسئلة</dt>
+              <dd className="text-xl font-bold text-teal-900 tabular-nums">
                 {totalQuestions}
               </dd>
             </div>
-            <div className="rounded-xl2 bg-cream-100 p-4">
-              <dt className="text-sm text-ink-500">الوقت التقريبي</dt>
-              <dd className="text-xl font-bold text-ink-800">10 دقائق</dd>
+            <div className="rounded-xl2 border border-violet-100 bg-gradient-to-bl from-violet-50 to-violet-100/70 p-4">
+              <dt className="text-sm font-medium text-violet-700">الوقت التقريبي</dt>
+              <dd className="text-xl font-bold text-violet-900">10 دقائق</dd>
             </div>
           </dl>
 

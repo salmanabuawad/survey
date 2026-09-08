@@ -51,6 +51,9 @@
 
   --radius-xl2: 1.25rem;
   --radius-xl3: 1.75rem;
+
+  --color-brand: var(--color-teal-600);
+  --color-brand-soft: var(--color-teal-50);
 }
 
 /* ---------------------------------------------------------------------------
@@ -69,17 +72,21 @@
   body {
     background-color: var(--color-cream-50);
     color: var(--color-ink-700);
-    /* Two very soft washes; they read as light, not as a gradient banner. */
     background-image:
       radial-gradient(
-        60rem 40rem at 100% -10%,
-        color-mix(in oklab, var(--color-teal-100) 70%, transparent),
-        transparent 60%
+        48rem 34rem at 108% -8%,
+        color-mix(in oklab, var(--color-teal-200) 92%, transparent),
+        transparent 58%
       ),
       radial-gradient(
-        50rem 36rem at -10% 8%,
-        color-mix(in oklab, var(--color-violet-100) 65%, transparent),
-        transparent 60%
+        42rem 30rem at -12% 6%,
+        color-mix(in oklab, var(--color-violet-200) 88%, transparent),
+        transparent 58%
+      ),
+      radial-gradient(
+        36rem 28rem at 50% 118%,
+        color-mix(in oklab, var(--color-coral-200) 70%, transparent),
+        transparent 62%
       );
     background-attachment: fixed;
     font-feature-settings: "kern" 1;

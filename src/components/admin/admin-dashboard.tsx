@@ -45,7 +45,7 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       {/* --- header --------------------------------------------------------- */}
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -69,7 +69,7 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
           </a>
           <a
             href={`/api/admin/export${query ? `?${query}` : ""}`}
-            className="inline-flex min-h-12 items-center rounded-full bg-teal-600 px-6 text-base font-semibold text-white shadow-warm transition-colors hover:bg-teal-700"
+            className="inline-flex min-h-12 items-center rounded-full bg-gradient-to-l from-teal-700 to-teal-500 px-6 text-base font-semibold text-white shadow-warm transition-colors hover:from-teal-800 hover:to-teal-600"
           >
             تصدير CSV
           </a>
@@ -172,8 +172,8 @@ export function AdminDashboard({ stats }: { stats: Stats }) {
             onClick={() => setTab(value)}
             className={
               tab === value
-                ? "min-h-11 rounded-full bg-ink-800 px-5 text-sm font-semibold text-white"
-                : "min-h-11 rounded-full border border-cream-200 bg-white/70 px-5 text-sm font-semibold text-ink-500 hover:border-teal-300 hover:text-ink-700"
+                ? "min-h-11 rounded-full bg-gradient-to-l from-teal-700 to-teal-500 px-5 text-sm font-semibold text-white shadow-warm"
+                : "min-h-11 rounded-full border border-cream-200 bg-white/70 px-5 text-sm font-semibold text-ink-500 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800"
             }
           >
             {label}
@@ -225,14 +225,14 @@ function StatTile({
   tone: "teal" | "violet" | "coral";
 }) {
   const tones = {
-    teal: "from-teal-50 to-teal-100/60 text-teal-800",
-    violet: "from-violet-50 to-violet-100/60 text-violet-800",
-    coral: "from-coral-50 to-coral-100/60 text-coral-700",
+    teal: "border-teal-100 from-teal-50 to-teal-100/80 text-teal-800",
+    violet: "border-violet-100 from-violet-50 to-violet-100/80 text-violet-800",
+    coral: "border-coral-100 from-coral-50 to-coral-100/80 text-coral-700",
   } as const;
 
   return (
     <div
-      className={`rounded-xl2 border border-cream-200/80 bg-gradient-to-bl p-5 ${tones[tone]}`}
+      className={`rounded-xl2 border bg-gradient-to-bl p-5 shadow-warm ${tones[tone]}`}
     >
       <p className="text-sm font-medium opacity-80">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>

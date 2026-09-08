@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 type Tone = "teal" | "violet" | "coral" | "neutral";
 
 const tones: Record<Tone, string> = {
-  teal: "bg-teal-100 text-teal-800",
-  violet: "bg-violet-100 text-violet-800",
-  coral: "bg-coral-100 text-coral-700",
-  neutral: "bg-cream-100 text-ink-500",
+  teal: "bg-teal-100 text-teal-800 ring-1 ring-teal-200/80",
+  violet: "bg-violet-100 text-violet-800 ring-1 ring-violet-200/80",
+  coral: "bg-coral-100 text-coral-700 ring-1 ring-coral-200/80",
+  neutral: "bg-cream-100 text-ink-500 ring-1 ring-cream-200/80",
 };
 
 export function Badge({
